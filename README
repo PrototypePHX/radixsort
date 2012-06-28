@@ -1,0 +1,6 @@
+DESCRIPTION:
+    This is a recursive implementation of the radix sort algorithm, using std::map as bucket. 
+    
+    I don't like the search for the maximum element of the range (l22), since it takes up roughly 
+    20-25% of the run time. I haven't come up with a good solution yet, other than passing the
+    maximum element as a parameter, which I don't find very elegant.
