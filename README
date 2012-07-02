@@ -1,6 +1,22 @@
 DESCRIPTION:
-    This is a recursive implementation of the radix sort algorithm, using std::map as bucket. 
+    This is a recursive implementation of the radix sort algorithm able to sort both positive
+    and negative integers. This is done by splitting the iterator-'range' in a positive and
+    negative subrange, which are both sorted separately. 
+
+    This implementation uses std::map as a bucket. Note that the initalization of the vectors
+    done in main() is only possible in C++11.
     
-    I don't like the search for the maximum element of the range (l22), since it takes up roughly 
-    20-25% of the run time. I haven't come up with a good solution yet, other than passing the
-    maximum element as a parameter, which I don't find very elegant.
+    I don't like the search for the maximum element of the range (l22), since it takes up a fair
+    amount of time, nevertheless, it is easy comprehensible and when using a recursive algorithm,
+    run time isn't your major concern.
+
+
+CHANGELOG:
+   Version R1 (next):
+   - sorting of FPs ?
+
+   Version R0 (current):
+   - implemented algorithms for sorting both negative and positive integers
+
+   Version B0:
+   - inital version, with minor bugfixes
