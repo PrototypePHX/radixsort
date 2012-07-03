@@ -3,78 +3,142 @@
 #include <map>
 #include <algorithm>
 
+template <typename RandomAccessIterator>
+void bubblesort(RandomAccessIterator first, RandomAccessIterator last)
+{
+   typedef RandomAccessIterator RAI;
+   bool sorted = false;
+   while (!sorted) {
+      sorted = true;
+      for (RAI i = first; i != last-1; ++i) {
+         RAI next = i+1;
+         if (*i > *next) {
+            sorted = false;
+            std::swap(*i, *next);
+         }
+      }
+   }
+}
+
+template <typename RandomAccessIterator>
+void selectionsort(RandomAccessIterator first, RandomAccessIterator last)
+{
+   typedef RandomAccessIterator RAI;
+   RAI offset = first;
+   for (RAI min = offset; offset != last; ++offset) {
+      for (RAI i = min; i != last-1; ++i) {
+         if (*i < *min) {
+            min = i;
+         }
+      }
+      std::swap(*offset, *min);
+   }
+}
+
+template <typename RandomAccessIterator>
+void combsort(RandomAccessIterator first, RandomAccessIterator last)
+{
+   static const float shrinkfac = 1.3f;
+   int gap = (last-first);
+   typedef RandomAccessIterator RAI;
+
+   bool sorted = false;
+   while (gap > 1 || !sorted) {
+      sorted = true;
+
+      gap /= shrinkfac+0.5f;
+      if (gap < 1) gap = 1;
+
+      for (RAI i = first; i+gap != last; ++i) {
+         if (*i > *(i+gap)) {
+            sorted = false;
+            std::swap(*i, *(i+gap));
+         }
+      }
+   }
+
+}
+
+
 template <typename ForwardIterator>
 void radixsort(ForwardIterator first, ForwardIterator last, int factor = 10)
 {
-   //partitioning
-   std::map<int, std::vector<int> > buckets;
-   for (ForwardIterator i = first; i != last; ++i) {
-      //'extract' the digit we want from the number and map it in the bucket
-      if (factor == 10) buckets[*i%factor].push_back(*i);
-      else buckets[(*i/(factor/10)) %10].push_back(*i);
-   }
+   if (last-first-1 >= 1) {
+      //partitioning
+      std::map<int, std::vector<int> > buckets;
+      for (ForwardIterator i = first; i != last; ++i) {
+         //'extract' the digit we want from the number and map it in the bucket
+         if (factor == 10) buckets[*i%factor].push_back(*i);
+         else buckets[(*i/(factor/10)) %10].push_back(*i);
+      }
 
-   //collecting
-   ForwardIterator copyfirst = first;
-   for (int i = 0; i < 10; ++i) {
-      for (std::vector<int>::const_iterator it = buckets[i].begin(); it != buckets[i].end(); )
-         //collect and apply to range [first, last)
-         *copyfirst++ = *it++;
-   }
+      //collecting
+      ForwardIterator copyfirst = first;
+      for (int i = 0; i < 10; ++i) {
+         for (std::vector<int>::const_iterator it = buckets[i].begin(); it != buckets[i].end(); )
+            //collect and apply to range [first, last)
+            *copyfirst++ = *it++;
+      }
 
-   //we could recurse even more, but then all values will be mapped to zero, hence there wouldn't be
-   //any change during the collection
-   if (factor > *std::max_element(first, last)) return;
-   radixsort(first, last, factor *= 10);
+      //we could recurse even more, but then all values will be mapped to zero, hence there wouldn't be
+      //any change during the collection
+      if (factor > *std::max_element(first, last)) return;
+      radixsort(first, last, factor *= 10);
+   }
 }
 
 
 template <typename ForwardIterator>
 void negradixsort(ForwardIterator first, ForwardIterator last, int factor = 10)
 {
-   std::map<int, std::vector<signed int> > buckets;
+   if (last-first-1 >= 1) {
+      std::map<int, std::vector<signed int> > buckets;
 
-   for (ForwardIterator i = first; i != last; ++i) {
-      //'extract' the digit we want from the number and map it in the bucket
-      if (factor == 10) buckets[(*i%factor)*-1].push_back(*i);
-      else buckets[((*i/(factor/10)) %10)*-1].push_back(*i);
+      for (ForwardIterator i = first; i != last; ++i) {
+         //'extract' the digit we want from the number and map it in the bucket
+         if (factor == 10) buckets[(*i%factor)*-1].push_back(*i);
+         else buckets[((*i/(factor/10)) %10)*-1].push_back(*i);
+      }
+
+      ForwardIterator copyfirst = first;
+      for (int i = 9; i >= 0; --i) {
+         for (std::vector<int>::const_iterator it = buckets[i].begin(); it != buckets[i].end(); )
+            //collect and apply to range [first, last)
+            *copyfirst++ = *it++;
+      }
+
+      if (factor > (*std::min_element(first, last))*-1) return;
+      negradixsort(first, last, factor *= 10);
    }
-
-   ForwardIterator copyfirst = first;
-   for (int i = 9; i >= 0; --i) {
-      for (std::vector<int>::const_iterator it = buckets[i].begin(); it != buckets[i].end(); )
-         //collect and apply to range [first, last)
-         *copyfirst++ = *it++;
-   }
-
-   if (factor > (*std::min_element(first, last))*-1) return;
-   negradixsort(first, last, factor *= 10);
 }
 
 
 template <typename ForwardIterator>
 void signedradixsort(ForwardIterator first, ForwardIterator last)
 {
-   //separate negative from positive values
+   if (last-first-1 >= 1) {
+      //separate negative from positive values
 
-   std::map<int, std::vector<signed int> > buckets;
-   for (ForwardIterator i = first; i != last; ++i) {
-      if (*i < 0) buckets[0].push_back(*i);
-      else buckets[1].push_back(*i);
+      std::map<int, std::vector<signed int> > buckets;
+      for (ForwardIterator i = first; i != last; ++i) {
+         if (*i < 0) buckets[0].push_back(*i);
+         else buckets[1].push_back(*i);
+      }
+
+      ForwardIterator copyfirst = first;
+      ForwardIterator begOfpos;
+      for (int i = 0; i < 2; ++i) {
+         //remember where positive values begin
+         begOfpos = copyfirst;
+         for (std::vector<signed int>::iterator it = buckets[i].begin(); it != buckets[i].end(); )
+            *copyfirst++ = *it++;
+      }
+
+      //sort negative and positive subranges respectively
+      radixsort(begOfpos, last);
+      negradixsort(first, begOfpos);
    }
-
-   ForwardIterator copyfirst = first;
-   ForwardIterator begOfpos;
-   for (int i = 0; i < 2; ++i) {
-      begOfpos = copyfirst;
-      for (std::vector<signed int>::iterator it = buckets[i].begin(); it != buckets[i].end(); )
-         *copyfirst++ = *it++;
-   }
-
-   //sort negative and positive subranges respectively
-   radixsort(begOfpos, last);
-   negradixsort(first, begOfpos);
-}
+}}
 
 int main()
 {
